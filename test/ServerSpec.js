@@ -446,7 +446,6 @@ describe('', function() {
           createSession(requestWithoutCookie, response, function() {
             var hash = requestWithoutCookie.session.hash;
             db.query('UPDATE sessions SET userId = ? WHERE hash = ?', [userId, hash], function(error, result) {
-
               var secondResponse = httpMocks.createResponse();
               var requestWithCookies = httpMocks.createRequest();
               requestWithCookies.cookies.shortlyid = hash;

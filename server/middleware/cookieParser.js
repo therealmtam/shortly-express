@@ -1,9 +1,6 @@
-var cookieParser = require('cookie-parser');
 
 const parseCookies = (req, res, next) => {
 
-  //console.log(req.headers);
-  // var cook = req.headers.cookie.split('=');
 
   var parseString = req.headers.cookie;
 
