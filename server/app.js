@@ -16,7 +16,6 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../public')));
 
 
-
 app.get('/', 
 (req, res) => {
   res.render('index');
@@ -78,7 +77,47 @@ app.post('/links',
 // Write your authentication routes here
 /************************************************************/
 
+//Handle signup
+app.post('/signup', (req, res, next) => {
+  models.Users.create(req.body)
+  .then(function(data) {
+    res.redirect('/');
+  })
+  .catch(err => {   
+    if (err.code === 'ER_DUP_ENTRY') {
+      res.redirect('/signup');
+    }
+  });
+});
 
+//Handle login
+app.post('/login', (req, res, next) => {
+  var username = req.body.username;
+  var password = req.body.password;
+
+  models.Users.get({username: username})
+  .then(result => {
+    var isCorrectPw = models.Users.compare(password, result.password, result.salt);
+    if (isCorrectPw) {
+      res.redirect('/');
+    } else {
+      res.redirect('/login');
+    }    
+  })
+  .catch(err => {
+    if (err.message === 'Cannot read property \'password\' of undefined') {
+      res.redirect('/login');
+    }
+  });
+});
+
+
+// app.get((req, res) => {
+//   models.Sessions.create()
+//   .then(hash => {
+//     console.log('--------HASH---------\n', hash);
+//   });
+// });
 
 /************************************************************/
 // Handle the code parameter route last - if all other routes fail
