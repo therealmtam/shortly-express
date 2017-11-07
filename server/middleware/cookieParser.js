@@ -1,7 +1,6 @@
 
 const parseCookies = (req, res, next) => {
 
-
   var parseString = req.headers.cookie;
 
   req.cookies = {};

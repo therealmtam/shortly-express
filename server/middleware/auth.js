@@ -15,19 +15,20 @@ module.exports.createSession = (req, res, next) => {
       res.cookies = {};
       res.cookies['shortlyid'] = {};
       res.cookies['shortlyid'].value = obj.hash;
+      res.cookie('shortlyid', obj.hash);
       next();
     })
     .catch(err => {
       console.log('ERROR FOUND ', err.message);
     });
-  } else {    
+  } else {
     req.session.hash = req.cookies.shortlyid;
     models.Sessions.get({hash: req.session.hash})
     .then(sessionRowData => {
       if (sessionRowData.userId) {
         models.Users.get({id: sessionRowData.userId})
         .then(userRowData => {
-          req.session.user = {};         
+          req.session.user = {};
           req.session.user.username = userRowData.username;
           req.session.userId = userRowData.id;
           next();
@@ -46,16 +47,16 @@ module.exports.createSession = (req, res, next) => {
         res.cookies = {};
         res.cookies['shortlyid'] = {};
         res.cookies['shortlyid'].value = obj.hash;
+        res.cookie('shortlyid', obj.hash);
         next();
       })
       .catch(err => {
         console.log('ERROR FOUND ', err.message);
       });
     });
-  }    
+  }
 };
 
 /************************************************************/
 // Add additional authentication middleware functions below
 /************************************************************/
-

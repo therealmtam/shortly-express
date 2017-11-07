@@ -15,20 +15,20 @@ app.use(partials());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../public')));
-app.use(Auth.createSession);
 app.use(cookieParser);
+app.use(Auth.createSession);
 
-app.get('/', 
+app.get('/',
 (req, res) => {
   res.render('index');
 });
 
-app.get('/create', 
+app.get('/create',
 (req, res) => {
   res.render('index');
 });
 
-app.get('/links', 
+app.get('/links',
 (req, res, next) => {
   models.Links.getAll()
     .then(links => {
@@ -39,7 +39,7 @@ app.get('/links',
     });
 });
 
-app.post('/links', 
+app.post('/links',
 (req, res, next) => {
   var url = req.body.url;
   if (!models.Links.isValidUrl(url)) {
@@ -83,9 +83,17 @@ app.post('/links',
 app.post('/signup', (req, res, next) => {
   models.Users.create(req.body)
   .then(function(data) {
-    res.redirect('/');
+    currentUserId = data.insertId;
+    var currentHash = req.session.hash;
+    models.Sessions.update({hash: currentHash}, {userId: currentUserId}).
+    then((data) => {
+      res.redirect('/');
+    })
+    .catch(err => {
+      console.log('FOUND AN ERROR');
+    });
   })
-  .catch(err => {   
+  .catch(err => {
     if (err.code === 'ER_DUP_ENTRY') {
       res.redirect('/signup');
     }
@@ -104,7 +112,7 @@ app.post('/login', (req, res, next) => {
       res.redirect('/');
     } else {
       res.redirect('/login');
-    }    
+    }
   })
   .catch(err => {
     if (err.message === 'Cannot read property \'password\' of undefined') {
