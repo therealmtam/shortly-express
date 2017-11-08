@@ -18,17 +18,17 @@ app.use(express.static(path.join(__dirname, '../public')));
 app.use(cookieParser);
 app.use(Auth.createSession);
 
-app.get('/',
+app.get('/', Auth.verifySession,
 (req, res) => {
   res.render('index');
 });
 
-app.get('/create',
+app.get('/create', Auth.verifySession,
 (req, res) => {
   res.render('index');
 });
 
-app.get('/links',
+app.get('/links', Auth.verifySession,
 (req, res, next) => {
   models.Links.getAll()
     .then(links => {
@@ -39,7 +39,7 @@ app.get('/links',
     });
 });
 
-app.post('/links',
+app.post('/links', Auth.verifySession,
 (req, res, next) => {
   var url = req.body.url;
   if (!models.Links.isValidUrl(url)) {
@@ -80,6 +80,10 @@ app.post('/links',
 /************************************************************/
 
 //Handle signup
+app.get('/signup', (req, res) => {
+  res.render('signup');
+});
+
 app.post('/signup', (req, res, next) => {
   models.Users.create(req.body)
   .then(function(data) {
@@ -101,6 +105,10 @@ app.post('/signup', (req, res, next) => {
 });
 
 //Handle login
+app.get('/login', (req, res) => {
+  res.render('login');
+});
+
 app.post('/login', (req, res, next) => {
   var username = req.body.username;
   var password = req.body.password;
@@ -109,7 +117,16 @@ app.post('/login', (req, res, next) => {
   .then(result => {
     var isCorrectPw = models.Users.compare(password, result.password, result.salt);
     if (isCorrectPw) {
-      res.redirect('/');
+      console.log('REQ.SESSION ', req.session);
+      req.session.user = { username: result.username };
+      currentUserId = req.session.userid = result.id;
+      models.Sessions.update({hash: req.session.hash}, {userId: currentUserId}).
+      then((data) => {
+        res.redirect(302, '/');
+      })
+      .catch(err => {
+        console.log('FOUND AN ERROR');
+      });
     } else {
       res.redirect('/login');
     }
@@ -121,13 +138,23 @@ app.post('/login', (req, res, next) => {
   });
 });
 
+//Handle logout
+app.get('/logout', (req, res, next) => {
+  //delete session from sessions table
+  //add res.clear on the response
+  var currentHash = req.session.hash;
+  console.log('IN LOGOUT ROUTE');
+  models.Sessions.delete({hash: currentHash})
+  .then(data => {
+    res.clearCookie('shortlyid');
+    next();
+  })
+  .catch(err => {
+    console.log('ERROR ', err);
+  });
 
-// app.get((req, res) => {
-//   models.Sessions.create()
-//   .then(hash => {
-//     console.log('--------HASH---------\n', hash);
-//   });
-// });
+});
+
 
 /************************************************************/
 // Handle the code parameter route last - if all other routes fail
